@@ -1,17 +1,15 @@
 ## A simple blog API
-A simple blog API with authentication, built with Typescript, Express, Node and MySQL
-Also documented with swagger
+A simple blog API with authentication, built with Typescript, Express, Node and MySQL, documented with Swagger.
 
 ### Setup
 - Clone this repository
 ``` 
 git clone https://github.com/Benzics/Medical-departures-blog-api.git
 ```
-- Run 
+- Install the needed dependencies by running
 ```
 npm install
 ```
-to install dependencies
 
 - Rename .env.example to .env and fill with correct info
 - start in dev environment by 
