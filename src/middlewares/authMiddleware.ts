@@ -1,6 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import jwt, {JwtPayload} from 'jsonwebtoken';
 import User from '../models/user';
+import { UserRequest as Request } from '../interfaces/UserRequestInterface';
 
 const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
@@ -15,12 +16,13 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
     } catch (err) {
       return res.status(401).send({ message: 'Invalid token' });
     }
-  
+
+
     // Type assertion
-    const { userId } = decodedToken as { userId: string };
-  
+    const { id } = decodedToken as { id: string };
+
     try {
-      const user = await User.findByPk(userId);
+      const user = await User.findByPk(id);
       if (!user) {
         return res.status(401).send({ message: 'User not found' });
       }

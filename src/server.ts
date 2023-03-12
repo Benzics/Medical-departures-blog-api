@@ -3,6 +3,7 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import errorMiddleware from "./middlewares/errorMiddleware";
 import { authRoutes } from "./routes/authRoutes";
+import { postRoutes } from "./routes/postRoutes";
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { config } from "dotenv";
@@ -28,6 +29,7 @@ class Server {
 
   private routes(): void {
     this.app.use("/api/auth", authRoutes);
+    this.app.use("/api/posts", postRoutes);
   }
 
   private handleError(): void {

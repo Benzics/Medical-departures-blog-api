@@ -1,41 +1,71 @@
-import { Model, DataTypes } from "sequelize";
-import { sequelize } from "../database";
-import { User } from "./user";
+import { Model, DataTypes, Optional, Association } from 'sequelize';
+import { sequelize } from '../database';
+import { User } from './user';
 
-export class Post extends Model {
+interface PostAttributes {
+  id: number;
+  title: string;
+  content: string;
+  userId: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// We have marked `userId` as optional here because we only need it during creation of post
+type PostCreationAttributes = Optional<PostAttributes, 'id' | 'createdAt' | 'updatedAt'>
+
+class Post extends Model<PostAttributes, PostCreationAttributes> implements PostAttributes {
   public id!: number;
   public title!: string;
   public content!: string;
+  public userId!: number;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  public static associations: {
+    user: Association<Post, User>;
+  };
 }
 
 Post.init(
-  {
-    id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      autoIncrement: true,
-      primaryKey: true,
+    {
+        id: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            autoIncrement: true,
+            primaryKey: true,
+        },
+        title: {
+            type: DataTypes.STRING(255),
+            allowNull: false,
+        },
+        content: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+        },
+        userId: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: false,
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
     },
-    title: {
-      type: new DataTypes.STRING(128),
-      allowNull: false,
-    },
-    content: {
-      type: new DataTypes.TEXT(),
-      allowNull: false,
-    },
-  },
-  {
-    tableName: "posts",
-    sequelize,
-  }
-);
+    {
+      tableName: 'posts',
+      sequelize,
+    }
+  );  
 
-// Define associations between User and Post models
-User.hasMany(Post);
-Post.belongsTo(User);
+Post.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user',
+});
 
 Post.sync({ force: false }).then(() => console.log("Post table created"));
 
-export default Post;
+export { Post, PostAttributes, PostCreationAttributes };
