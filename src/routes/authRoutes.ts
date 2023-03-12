@@ -5,6 +5,37 @@ const router = Router();
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - name
+ *         - email
+ *         - password
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: The auto-generated id of the user
+ *         name:
+ *           type: string
+ *           description: The name of the user
+ *         email:
+ *           type: string
+ *           description: The email address of the user
+ *         password:
+ *           type: string
+ *           description: The plain text password of the user
+ *       example:
+ *         id: 1
+ *         name: user
+ *         email: user@medicaldepartures.com
+ *         password: 123456
+ */
+
+
+/**
+ * @swagger
  * /api/auth/signup:
  *   post:
  *     summary: Create a new user account
