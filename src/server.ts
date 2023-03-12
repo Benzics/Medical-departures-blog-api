@@ -3,8 +3,8 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import errorMiddleware from "./middlewares/errorMiddleware";
 import { authRoutes } from "./routes/authRoutes";
-// import { userRoutes } from "./routes/userRoutes";
-// import { postRoutes } from "./routes/postRoutes";
+import swaggerUi from 'swagger-ui-express';
+import swaggerJsdoc from 'swagger-jsdoc';
 import { config } from "dotenv";
 
 config(); // Load environment variables from .env file
@@ -17,6 +17,7 @@ class Server {
     this.config();
     this.routes();
     this.handleError();
+    this.setupSwagger();
   }
 
   private config(): void {
@@ -27,17 +28,30 @@ class Server {
 
   private routes(): void {
     this.app.use("/api/auth", authRoutes);
-    // this.app.use("/api/users", userRoutes);
-    // this.app.use("/api/posts", postRoutes);
   }
 
   private handleError(): void {
     this.app.use(errorMiddleware);
+  }
+
+  private setupSwagger(): void {
+    const options = {
+      definition: {
+        openapi: '3.0.0',
+        info: {
+          title: 'Medical Departures Blog API',
+          version: '1.0.0',
+        },
+      },
+      apis: ['./src/routes/*.ts'],
+    };
+    const specs = swaggerJsdoc(options);
+    this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
   }
 }
 
 const server = new Server().app;
 
 server.listen(process.env.PORT, () => {
-    console.log(`Server running on port ${process.env.PORT}`);
+  console.log(`Server running on port ${process.env.PORT}`);
 });
