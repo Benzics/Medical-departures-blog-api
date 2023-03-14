@@ -1,22 +1,14 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { generateAuthToken } from "../utils/authUtils";
 import { User } from "../models/user";
 import { hashPassword, comparePassword } from "../utils/passwordUtils";
-import { validationResult } from "express-validator";
 
 /**
  * Controller method to handle user signup
  */
-export const signUp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const signUp = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password } = req.body;
-
-    // Validate request data
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(422).json({ errors: errors.array() });
-      return;
-    }
 
     // Check if user already exists
     const userExists = await User.findOne({ where: { email } });
@@ -33,23 +25,17 @@ export const signUp = async (req: Request, res: Response, next: NextFunction): P
     const token = generateAuthToken(user.id);
     res.json({ token });
   } catch (err) {
-   next(err);
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
 /**
  * Controller method to handle user signin
  */
-export const signIn = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const signIn = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
-
-    // Validate request data
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(422).json({ errors: errors.array() });
-      return;
-    }
 
     // Check if user exists
     const user = await User.findOne({ where: { email } });
@@ -68,6 +54,7 @@ export const signIn = async (req: Request, res: Response, next: NextFunction): P
     const token = generateAuthToken(user.id);
     res.json({ token });
   } catch (err) {
-   next(err);
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
