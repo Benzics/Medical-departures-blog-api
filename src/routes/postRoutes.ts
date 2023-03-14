@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createPost, getPostById, updatePost, deletePost } from "../controllers/postController";
+import { getAllPosts ,createPost, getPostById, updatePost, deletePost } from "../controllers/postController";
 import authMiddleware from "../middlewares/authMiddleware";
 
 const router = Router();
@@ -34,6 +34,27 @@ const router = Router();
  *         userId: 1
  */
 
+/**
+ * @swagger
+ * /api/posts:
+ *   get:
+ *     summary: Get all posts
+ *     tags:
+ *       - Posts
+ *     responses:
+ *       200:
+ *         description: List of all posts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Post'
+ *       500:
+ *         description: Internal server error
+ */
+
+router.get('/', getAllPosts);
 
 /**
  * @swagger

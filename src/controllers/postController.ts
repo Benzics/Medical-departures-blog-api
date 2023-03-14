@@ -4,6 +4,19 @@ import { validationResult } from "express-validator";
 import { UserRequest as Request } from "../interfaces/UserRequestInterface";
 
 /**
+ * Controller method to handle retrieving all posts
+ */
+export const getAllPosts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const posts = await Post.findAll();
+
+    res.json(posts);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * Controller method to handle post creation
  */
 export const createPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
