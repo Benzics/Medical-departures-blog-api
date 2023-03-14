@@ -1,14 +1,12 @@
-import { Response } from "express";
+import { Response, NextFunction } from "express";
 import { Post } from "../models/post";
 import { validationResult } from "express-validator";
 import { UserRequest as Request } from "../interfaces/UserRequestInterface";
 
-
-
 /**
  * Controller method to handle post creation
  */
-export const createPost = async (req: Request, res: Response): Promise<void> => {
+export const createPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     // Validate request data
     const errors = validationResult(req);
@@ -32,15 +30,15 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
 
     res.json({ post });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+   
+    next(err);
   }
 };
 
 /**
  * Controller method to handle retrieving a single post
  */
-export const getPostById = async (req: Request, res: Response): Promise<void> => {
+export const getPostById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const postId = req.params.id;
 
@@ -53,15 +51,15 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
 
     res.json(post);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+   
+    next(err);
   }
 };
 
 /**
  * Controller method to handle updating a post
  */
-export const updatePost = async (req: Request, res: Response): Promise<void> => {
+export const updatePost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     // Validate request data
     const errors = validationResult(req);
@@ -91,15 +89,15 @@ export const updatePost = async (req: Request, res: Response): Promise<void> => 
 
     res.json(post);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+   
+    next(err);
   }
 };
 
 /**
  * Controller method to handle deleting a post
  */
-export const deletePost = async (req: Request, res: Response): Promise<void> => {
+export const deletePost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const postId = req.params.id;
     const post = await Post.findByPk(postId);
@@ -119,7 +117,7 @@ export const deletePost = async (req: Request, res: Response): Promise<void> => 
 
     res.json({ message: "Post deleted successfully" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+   
+    next(err);
   }
 };
