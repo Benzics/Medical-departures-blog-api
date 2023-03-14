@@ -5,6 +5,7 @@ import errorMiddleware from "./middlewares/errorMiddleware";
 import { authRoutes } from "./routes/authRoutes";
 import { postRoutes } from "./routes/postRoutes";
 import { indexRoute } from "./routes";
+import { commentRoutes } from "./routes/commentRoutes";
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { config } from "dotenv";
@@ -29,9 +30,10 @@ class Server {
   }
 
   private routes(): void {
-    this.app.use('/', indexRoute);
+    this.app.use("/", indexRoute);
     this.app.use("/api/auth", authRoutes);
     this.app.use("/api/posts", postRoutes);
+    this.app.use("/api/comments", commentRoutes);
   }
 
   private handleError(): void {

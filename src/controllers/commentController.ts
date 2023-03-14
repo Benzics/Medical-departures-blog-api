@@ -8,12 +8,13 @@ export const createComment = async (
   next: NextFunction
 ) => {
   try {
-    const { content, postId, userId } = req.body;
+    const { content, postId } = req.body;
 
     // Check that all required fields are present
-    if (!content || !postId || !userId) {
+    if (!content || !postId) {
       return res.status(400).json({ error: 'All fields are required' });
     }
+    const userId = req.user!.id;
 
     // Create new comment
     const comment = await Comment.create({
@@ -35,7 +36,7 @@ export const getComments = async (
 ) => {
   try {
     const comments = await Comment.findAll();
-    return res.status(200).json(comments);
+    return res.json(comments);
   } catch (error) {
     next(error);
   }
@@ -54,7 +55,7 @@ export const getCommentById = async (
       return res.status(404).json({ error: 'Comment not found' });
     }
 
-    return res.status(200).json(comment);
+    return res.json(comment);
   } catch (error) {
     next(error);
   }
@@ -80,10 +81,15 @@ export const updateComment = async (
       return res.status(404).json({ error: 'Comment not found' });
     }
 
+    // Check that the logged in user owns the comment
+    if (req.user && comment.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+
     comment.content = content;
     await comment.save();
 
-    return res.status(200).json(comment);
+    return res.json(comment);
   } catch (error) {
     next(error);
   }
@@ -109,8 +115,8 @@ export const deleteComment = async (
       }
   
       await comment.destroy();
-  
-      return res.status(204).json();
+      
+      return res.json({ message: "Comment deleted successfully" });
     } catch (error) {
       next(error);
     }

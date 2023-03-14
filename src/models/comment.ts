@@ -54,4 +54,6 @@ Comment.init(
 Comment.belongsTo(Post, { foreignKey: 'postId', as: 'post' });
 Comment.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+Comment.sync({ force: false }).then(() => console.log("Comment table created"));
+
 export default Comment;
