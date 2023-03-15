@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllPosts ,createPost, getPostById, updatePost, deletePost } from "../controllers/postController";
+import postController from "../controllers/postController";
 import authMiddleware from "../middlewares/authMiddleware";
 
 const router = Router();
@@ -54,7 +54,7 @@ const router = Router();
  *         description: Internal server error
  */
 
-router.get('/', getAllPosts);
+router.get('/', postController.getAll);
 
 /**
  * @swagger
@@ -84,7 +84,7 @@ router.get('/', getAllPosts);
  *             schema:
  *               $ref: '#/components/schemas/Post'
  */
-router.post("/", authMiddleware, createPost);
+router.post("/", authMiddleware, postController.create);
 
 /**
  * @swagger
@@ -108,7 +108,7 @@ router.post("/", authMiddleware, createPost);
  *             schema:
  *               $ref: '#/components/schemas/Post'
  */
-router.get("/:id", getPostById);
+router.get("/:id", postController.getById);
 
 
 /**
@@ -146,7 +146,7 @@ router.get("/:id", getPostById);
  *             schema:
  *               $ref: '#/components/schemas/Post'
  */
-router.put("/:id", authMiddleware, updatePost);
+router.put("/:id", authMiddleware, postController.update);
 
 /**
  * Deletes a post by ID
@@ -175,6 +175,6 @@ router.put("/:id", authMiddleware, updatePost);
  *       500:
  *         description: Internal server error
  */
-router.delete("/:id", authMiddleware, deletePost);
+router.delete("/:id", authMiddleware, postController.delete);
 
 export { router as postRoutes};

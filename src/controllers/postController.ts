@@ -1,136 +1,97 @@
-import { Response, NextFunction } from "express";
-import { Post } from "../models/post";
-import { validationResult } from "express-validator";
-import { UserRequest as Request } from "../interfaces/UserRequestInterface";
+import { Request, Response } from 'express';
+import db from '../database';
 
-/**
- * Controller method to handle retrieving all posts
- */
-export const getAllPosts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const posts = await Post.findAll();
+interface Post {
+  id: number;
+  title: string;
+  content: string;
+  userId: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
-    res.json(posts);
-  } catch (err) {
-    next(err);
+class PostController {
+  public async getAll(req: Request, res: Response): Promise<void> {
+    try {
+      const posts: Post[] = await db.query('SELECT * FROM posts');
+      res.status(200).json(posts);
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-};
 
-/**
- * Controller method to handle post creation
- */
-export const createPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    // Validate request data
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(422).json({ errors: errors.array() });
-      return;
+  public async getById(req: Request, res: Response): Promise<void> {
+    const id: number = parseInt(req.params.id);
+    try {
+      const post: Post[] = await db.query('SELECT * FROM posts WHERE id = ?', [id]);
+      if (post.length === 0) {
+        res.status(404).json({ error: 'Post not found' });
+      } else {
+        res.status(200).json(post[0]);
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    // Check if user is authenticated
-    if (!req.user?.id) {
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
-
-    // Create new post
-    const post = await Post.create({
-      title: req.body.title,
-      content: req.body.content,
-      userId: req.user.id,
-    });
-
-    res.json({ post });
-  } catch (err) {
-   
-    next(err);
   }
-};
 
-/**
- * Controller method to handle retrieving a single post
- */
-export const getPostById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const postId = req.params.id;
+  public async create(req: Request, res: Response): Promise<void> {
+    const { title, content } = req.body;
 
-    const post = await Post.findByPk(postId);
-
-    if (!post) {
-      res.status(404).json({ message: "Post not found" });
+    if(!title || !content) {
+      res.status(400).json({message: 'Title and content is required'});
       return;
     }
 
-    res.json(post);
-  } catch (err) {
-   
-    next(err);
+    const userId = req.user?.id;
+    try {
+      const result = await db.query('INSERT INTO posts (title, content, userId) VALUES (?, ?, ?)', [
+        title,
+        content,
+        userId,
+      ]);
+      const newPostId: number = result.insertId;
+      const newPost: Post[] = await db.query('SELECT * FROM posts WHERE id = ?', [newPostId]);
+      res.status(201).json(newPost[0]);
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-};
 
-/**
- * Controller method to handle updating a post
- */
-export const updatePost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    // Validate request data
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(422).json({ errors: errors.array() });
+  public async update(req: Request, res: Response): Promise<void> {
+    const id: number = parseInt(req.params.id);
+    const { title, content } = req.body;
+
+    if(!title || !content) {
+      res.status(400).json({message: 'Title and content is required'});
       return;
     }
-
-    const postId = req.params.id;
-    const post = await Post.findByPk(postId);
-
-    if (!post) {
-      res.status(404).json({ message: "Post not found" });
-      return;
+    
+    try {
+      const result = await db.query('UPDATE posts SET title = ?, content = ? WHERE id = ?', [title, content, id]);
+      if (result.affectedRows === 0) {
+        res.status(404).json({ error: 'Post not found' });
+      } else {
+        const updatedPost: Post[] = await db.query('SELECT * FROM posts WHERE id = ?', [id]);
+        res.status(200).json(updatedPost[0]);
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    // Check if user is authorized to update the post
-    if (post.userId !== req.user?.id) {
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
-
-    post.title = req.body.title;
-    post.content = req.body.content;
-
-    await post.save();
-
-    res.json(post);
-  } catch (err) {
-   
-    next(err);
   }
-};
 
-/**
- * Controller method to handle deleting a post
- */
-export const deletePost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const postId = req.params.id;
-    const post = await Post.findByPk(postId);
-
-    if (!post) {
-      res.status(404).json({ message: "Post not found" });
-      return;
+  public async delete(req: Request, res: Response): Promise<void> {
+    const id: number = parseInt(req.params.id);
+    try {
+      const result = await db.query('DELETE FROM posts WHERE id = ?', [id]);
+      if (result.affectedRows === 0) {
+        res.status(404).json({ error: 'Post not found' });
+      } else {
+        res.status(204).send();
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    // Check if user is authorized to delete the post
-    if (post.userId !== req.user?.id) {
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
-
-    await post.destroy();
-
-    res.json({ message: "Post deleted successfully" });
-  } catch (err) {
-   
-    next(err);
   }
-};
+}
+
+export default new PostController();

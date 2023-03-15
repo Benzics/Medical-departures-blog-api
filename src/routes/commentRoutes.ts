@@ -1,12 +1,6 @@
 import { Router } from 'express';
-import {
-  createComment,
-  deleteComment,
-  getCommentById,
-  getComments,
-  updateComment,
-} from '../controllers/commentController';
 import authMiddleware from '../middlewares/authMiddleware';
+import commentController from '../controllers/commentController';
 
 const router = Router();
 
@@ -69,7 +63,7 @@ const router = Router();
  *       500:
  *         description: Internal server error
  */
-router.get('/', getComments);
+router.get('/', commentController.getAll);
 
 /**
  * @swagger
@@ -97,7 +91,7 @@ router.get('/', getComments);
  *       500:
  *         description: Internal server error
  */
-router.get('/:id', getCommentById);
+router.get('/:id', commentController.getById);
 
 /**
  * @swagger
@@ -131,7 +125,7 @@ router.get('/:id', getCommentById);
  *       500:
  *         description: Internal server error
  */
-router.post('/', authMiddleware, createComment);
+router.post('/', authMiddleware, commentController.create);
 
 /**
  * @swagger
@@ -172,7 +166,7 @@ router.post('/', authMiddleware, createComment);
  *       500:
  *         description: Internal server error
  */
-router.put('/:id', authMiddleware, updateComment);
+router.put('/:id', authMiddleware, commentController.update);
 
 /**
  * @swagger
@@ -200,7 +194,7 @@ router.put('/:id', authMiddleware, updateComment);
  *       500:
  *         description: Internal server error
  */
-router.delete('/:id', authMiddleware, deleteComment);
+router.delete('/:id', authMiddleware, commentController.delete);
 
 
 export {router as commentRoutes};

@@ -1,0 +1,62 @@
+service: aws-blog-api
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+
+functions:
+  blogApi:
+    handler: dist/server.handler
+    events:
+      - http:
+          path: /
+          method: ANY
+          cors: true
+      - http:
+          path: /api/auth/signup
+          method: POST
+      - http:
+          path: /api/auth/signin
+          method: POST
+      - http:
+          path: /api-docs/{proxy+}
+          method: GET
+      - http:
+          path: /api/posts
+          method: GET
+      - http:
+          path: /api/posts
+          method: POST
+      - http:
+          path: /api/posts/{id}
+          method: GET
+      - http:
+          path: /api/posts/{id}
+          method: PUT
+      - http:
+          path: /api/posts/{id}
+          method: DELETE
+      - http:
+          path: /api/comments
+          method: GET
+      - http:
+          path: /api/comments
+          method: POST
+      - http:
+          path: /api/comments/{id}
+          method: GET
+      - http:
+          path: /api/comments/{id}
+          method: PUT
+      - http:
+          path: /api/comments/{id}
+          method: DELETE
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    noPrependStageInUrl: true

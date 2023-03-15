@@ -1,17 +1,28 @@
-import { Sequelize } from "sequelize";
-import { config } from "dotenv";
+import mysql from 'mysql2/promise';
+import {config} from 'dotenv';
 
 config();
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME || 'db',
-  process.env.DB_USER || 'root',
-  process.env.DB_PASSWORD || '',
-  {
-    dialect: "mysql",
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-  }
-);
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'your-mysql-username',
+  password: process.env.DB_PASSWORD || 'your-mysql-password',
+  database: process.env.DB_NAME || 'your-database-name',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
 
-export { sequelize };
+export default {
+  async query(sql: string, values?: any[]): Promise<any> {
+    const connection = await pool.getConnection();
+    try {
+      const [rows, fields] = await connection.query(sql, values);
+      return rows;
+    } catch (error) {
+      console.error(error);
+    } finally {
+      connection.release();
+    }
+  },
+};

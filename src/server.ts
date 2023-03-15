@@ -8,9 +8,8 @@ import { indexRoute } from "./routes";
 import { commentRoutes } from "./routes/commentRoutes";
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
-import { config } from "dotenv";
+import awsServerlessExpress from 'aws-serverless-express';
 
-config(); // Load environment variables from .env file
 
 class Server {
   public app: Application;
@@ -23,7 +22,7 @@ class Server {
     this.setupSwagger();
   }
 
-  private config(): void {
+  private async config() {
     this.app.use(cors());
     this.app.use(bodyParser.json());
     this.app.use(bodyParser.urlencoded({ extended: true }));
@@ -52,12 +51,20 @@ class Server {
       apis: ['./src/routes/*.ts'],
     };
     const specs = swaggerJsdoc(options);
-    this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+    this.app.use('/api-docs', swaggerUi.serveWithOptions({ redirect: false }), swaggerUi.setup(specs));
   }
 }
 
 const server = new Server().app;
+const binaryMimeTypes = [
+  'application/json',
+  'application/octet-stream',
+  'image/jpeg',
+  'image/png',
+  'image/gif'
+];
+const serverless = awsServerlessExpress.createServer(server, undefined, binaryMimeTypes);
 
-server.listen(process.env.PORT, () => {
-  console.log(`Server running on port ${process.env.PORT}`);
-});
+exports.handler = (event: any, context: any) => {
+  awsServerlessExpress.proxy(serverless, event, context);
+};

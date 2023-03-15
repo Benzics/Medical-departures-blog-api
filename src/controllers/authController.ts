@@ -1,73 +1,79 @@
-import { Request, Response, NextFunction } from "express";
-import { generateAuthToken } from "../utils/authUtils";
-import { User } from "../models/user";
-import { hashPassword, comparePassword } from "../utils/passwordUtils";
-import { validationResult } from "express-validator";
+import { Request, Response } from 'express';
+import { hashPassword, comparePassword } from '../utils/passwordUtils';
+import { generateAuthToken } from '../utils/authUtils';
+import db from '../database';
 
-/**
- * Controller method to handle user signup
- */
-export const signUp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const { name, email, password } = req.body;
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  password: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
-    // Validate request data
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(422).json({ errors: errors.array() });
-      return;
-    }
-
-    // Check if user already exists
-    const userExists = await User.findOne({ where: { email } });
-    if (userExists) {
-      res.status(400).json({ message: "User already exists" });
-      return;
-    }
-
-    // Hash password and create user
-    const hashedPassword = await hashPassword(password);
-    const user = await User.create({ name, email, password: hashedPassword });
-
-    // Generate JWT token and send response
-    const token = generateAuthToken(user.id);
-    res.json({ token });
-  } catch (err) {
-   next(err);
-  }
-};
-
-/**
- * Controller method to handle user signin
- */
-export const signIn = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
+class AuthController {
+  public async login(req: Request, res: Response): Promise<void> {
     const { email, password } = req.body;
 
-    // Validate request data
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(422).json({ errors: errors.array() });
+    if (!email || !password) {
+      res.status(400).json({ message: 'Email and password are required' });
       return;
     }
 
-    // Check if user exists
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
-      res.status(401).json({ message: "Invalid credentials" });
-      return;
-    }
+    try {
+      const users: User[] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+      if (users.length === 0) {
+        res.status(401).json({ message: 'Invalid email or password' });
+        return;
+      }
 
-    // Compare passwords and generate JWT token
-    const passwordsMatch = await comparePassword(password, user.password);
-    if (!passwordsMatch) {
-      res.status(401).json({ message: "Invalid credentials" });
-      return;
-    }
+      const user = users[0];
+      const isPasswordValid = await comparePassword(password, user.password);
+      if (!isPasswordValid) {
+        res.status(401).json({ message: 'Invalid email or password' });
+        return;
+      }
 
-    const token = generateAuthToken(user.id);
-    res.json({ token });
-  } catch (err) {
-   next(err);
+      const token = generateAuthToken(user.id);
+      res.status(200).json({ token });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-};
+
+  public async register(req: Request, res: Response): Promise<void> {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      res.status(400).json({ message: 'Name, email, and password are required' });
+      return;
+    }
+
+    try {
+      const existingUsers: User[] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+      if (existingUsers.length > 0) {
+        res.status(409).json({ message: 'Email already exists' });
+        return;
+      }
+
+      const hashedPassword = await hashPassword(password);
+      const result = await db.query('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', [
+        name,
+        email,
+        hashedPassword,
+      ]);
+      const newUserId: number = result.insertId;
+      const newUser: User[] = await db.query('SELECT * FROM users WHERE id = ?', [newUserId]);
+
+      const token = generateAuthToken(newUserId);
+      res.status(201).json({ token });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+}
+
+export default new AuthController();

@@ -1,124 +1,95 @@
-import { Response, NextFunction } from 'express';
-import { UserRequest as Request } from '../interfaces/UserRequestInterface';
-import Comment from '../models/comment';
+import { Request, Response } from 'express';
+import db from '../database';
 
-export const createComment = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
+interface Comment {
+  id: number;
+  content: string;
+  postId: number;
+  userId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+class CommentController {
+  public async getAll(req: Request, res: Response): Promise<void> {
+    try {
+      const comments: Comment[] = await db.query('SELECT * FROM comments');
+      res.status(200).json(comments);
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  public async getById(req: Request, res: Response): Promise<void> {
+    const id: number = parseInt(req.params.id);
+    try {
+      const comment: Comment[] = await db.query('SELECT * FROM comments WHERE id = ?', [id]);
+      if (comment.length === 0) {
+        res.status(404).json({ error: 'Comment not found' });
+      } else {
+        res.status(200).json(comment[0]);
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  public async create(req: Request, res: Response): Promise<void> {
     const { content, postId } = req.body;
 
-    // Check that all required fields are present
-    if (!content || !postId) {
-      return res.status(400).json({ error: 'All fields are required' });
-    }
-    const userId = req.user!.id;
-
-    // Create new comment
-    const comment = await Comment.create({
-      content,
-      postId,
-      userId,
-    });
-
-    return res.status(201).json(comment);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getComments = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const comments = await Comment.findAll();
-    return res.json(comments);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getCommentById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { id } = req.params;
-    const comment = await Comment.findByPk(id);
-
-    if (!comment) {
-      return res.status(404).json({ error: 'Comment not found' });
+    if(!postId || !content) {
+        res.status(400).json({message: 'PostId and content is required'});
+        return;
     }
 
-    return res.json(comment);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const updateComment = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { id } = req.params;
-    const { content } = req.body;
-
-    // Check that content is present
-    if (!content) {
-      return res.status(400).json({ error: 'Content is required' });
-    }
-
-    const comment = await Comment.findByPk(id);
-
-    if (!comment) {
-      return res.status(404).json({ error: 'Comment not found' });
-    }
-
-    // Check that the logged in user owns the comment
-    if (req.user && comment.userId !== req.user.id) {
-        return res.status(403).json({ error: 'Unauthorized' });
-    }
-
-    comment.content = content;
-    await comment.save();
-
-    return res.json(comment);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const deleteComment = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+    const userId = req.user?.id;
     try {
-      const { id } = req.params;
-  
-      const comment = await Comment.findByPk(id);
-  
-      if (!comment) {
-        return res.status(404).json({ error: 'Comment not found' });
-      }
-  
-      // Check that the logged in user owns the comment
-      if (req.user && comment.userId !== req.user.id) {
-        return res.status(403).json({ error: 'Unauthorized' });
-      }
-  
-      await comment.destroy();
-      
-      return res.json({ message: "Comment deleted successfully" });
+      const result = await db.query('INSERT INTO comments (content, postId, userId) VALUES (?, ?, ?)', [
+        content,
+        postId,
+        userId,
+      ]);
+      const newCommentId: number = result.insertId;
+      const newComment: Comment[] = await db.query('SELECT * FROM comments WHERE id = ?', [newCommentId]);
+      res.status(201).json(newComment[0]);
     } catch (error) {
-      next(error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-  };
-  
+  }
+
+  public async update(req: Request, res: Response): Promise<void> {
+    const id: number = parseInt(req.params.id);
+    const { content } = req.body;
+    if(!content) {
+        res.status(400).json({message: 'Content is required'});
+        return;
+    }
+    try {
+      const result = await db.query('UPDATE comments SET content = ? WHERE id = ?', [content, id]);
+      if (result.affectedRows === 0) {
+        res.status(404).json({ error: 'Comment not found' });
+      } else {
+        const updatedComment: Comment[] = await db.query('SELECT * FROM comments WHERE id = ?', [id]);
+        res.status(200).json(updatedComment[0]);
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  public async delete(req: Request, res: Response): Promise<void> {
+    const id: number = parseInt(req.params.id);
+    try {
+      const result = await db.query('DELETE FROM comments WHERE id = ?', [id]);
+      if (result.affectedRows === 0) {
+        res.status(404).json({ error: 'Comment not found' });
+      } else {
+        res.status(204).send();
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+}
+
+export default new CommentController();

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { signUp, signIn } from "../controllers/authController";
+import authController from "../controllers/authController";
 
 const router = Router();
 
@@ -70,7 +70,7 @@ const router = Router();
  *       500:
  *         description: Internal server error
  */
-router.post("/signup", signUp);
+router.post("/signup", authController.register);
 
 
 /**
@@ -109,6 +109,6 @@ router.post("/signup", signUp);
  *       500:
  *         description: Internal server error
  */
-router.post("/signin", signIn);
+router.post("/signin", authController.login);
 
 export { router as authRoutes };
