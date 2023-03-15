@@ -1,6 +1,9 @@
 ## A simple blog API
 A simple blog API with authentication, built with Typescript, Express, Node and MySQL, documented with Swagger.
 
+### Dependencies
+- Serverless
+
 ### Setup
 - Clone this repository
 ``` 
@@ -14,7 +17,7 @@ npm install
 - Rename .env.example to .env and fill with correct info
 - start in dev environment by 
 ```
-npm run dev
+serverless offline
 ```
 
 ### Swagger documentation
